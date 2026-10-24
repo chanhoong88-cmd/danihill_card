@@ -586,42 +586,38 @@ const title = document.getElementById('heroTitle');
 title.innerHTML = [...title.textContent].map((c,i)=>
   `<span style="transition-delay:${0.9 + i*0.11}s">${c===' ' ? '&nbsp;' : c}</span>`).join('');
 
-/* ---- background music: gapless loop that fades in when the envelope is opened ---- */
+/* ---- background music: starts on the envelope tap, plays even with the iPhone silent switch on ---- */
 const Music = (()=>{
-  let ctx=null, gain=null, el=null, on=true, started=false;
   const btn=document.getElementById('soundBtn');
-  const bufP = fetch(CONFIG.music).then(r=>r.ok?r.arrayBuffer():Promise.reject()).catch(()=>null);   // preload early
-  function fadeTo(v,sec){
-    if(gain){ const t=ctx.currentTime; gain.gain.cancelScheduledValues(t); gain.gain.setValueAtTime(gain.gain.value,t); gain.gain.linearRampToValueAtTime(v,t+sec); }
-    else if(el){ const from=el.volume, t0=performance.now();
-      (function step(n){ const k=Math.min(1,(n-t0)/(sec*1000)); el.volume=from+(v-from)*k; if(k<1) requestAnimationFrame(step); })(t0); }
+  const el=new Audio(); el.src=CONFIG.music; el.loop=true; el.preload='auto';
+  el.setAttribute('playsinline',''); el.setAttribute('webkit-playsinline','');
+  let on=true, started=false, fadeId=0;
+  function fadeTo(v,sec){                      // volume fades work on desktop/Android; iPhone plays at the track's own level
+    const id=++fadeId, from=el.volume, t0=performance.now();
+    (function step(n){ if(id!==fadeId) return; const k=Math.min(1,(n-t0)/(sec*1000));
+      try{ el.volume=from+(v-from)*k; }catch(e){} if(k<1) requestAnimationFrame(step); })(t0);
   }
-  function fallback(){
-    el=new Audio(CONFIG.music); el.loop=true; el.volume=0;
-    el.play().then(()=>fadeTo(CONFIG.musicVolume,4)).catch(()=>{});
+  function setUI(){ btn.classList.toggle('muted',!on); btn.setAttribute('aria-label',on?'Mute music':'Play music'); }
+  function play(){
+    el.muted=false;
+    const p=el.play();
+    if(p && p.then) p.then(()=>fadeTo(CONFIG.musicVolume,4)).catch(()=>{ on=false; setUI(); });   // blocked → guest can tap the button
   }
-  async function start(){                       // must be called from the tap
+  function start(){                            // called synchronously from the guest's tap
     if(started) return; started=true; btn.classList.add('show');
-    try{
-      const AC=window.AudioContext||window.webkitAudioContext; ctx=new AC();
-      gain=ctx.createGain(); gain.gain.value=0; gain.connect(ctx.destination);
-      if(ctx.state==='suspended') ctx.resume();
-      const ab=await bufP; if(!ab) throw 0;
-      const buf=await ctx.decodeAudioData(ab.slice(0));
-      const src=ctx.createBufferSource(); src.buffer=buf; src.loop=true; src.connect(gain); src.start();
-      fadeTo(on?CONFIG.musicVolume:0,4);
-    }catch(e){ gain=null; if(ctx) ctx.close(); ctx=null; fallback(); }
+    try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){}
+    try{ el.volume=0; }catch(e){}
+    play();
   }
   function toggle(){
-    on=!on; btn.classList.toggle('muted',!on); btn.setAttribute('aria-label',on?'Mute music':'Play music');
-    if(ctx && ctx.state==='suspended') ctx.resume();
-    if(el && on && el.paused) el.play().catch(()=>{});
-    fadeTo(on?CONFIG.musicVolume:0,.8);
+    on=!on; setUI();
+    if(on){ if(el.paused) play(); else { el.muted=false; fadeTo(CONFIG.musicVolume,.6); } }
+    else { el.muted=true; }
   }
   btn.addEventListener('click',e=>{ e.stopPropagation(); toggle(); });
   document.addEventListener('visibilitychange',()=>{
-    if(ctx){ document.hidden?ctx.suspend():ctx.resume(); }
-    else if(el){ document.hidden?el.pause():(on&&el.play().catch(()=>{})); }
+    if(!started) return;
+    if(document.hidden) el.pause(); else if(on) el.play().catch(()=>{});
   });
   return {start};
 })();
