@@ -132,7 +132,10 @@ body.opened .hero-frame{opacity:1}
 .h-title span{display:inline-block;opacity:0;transform:translateY(30px);filter:blur(8px);transition:opacity 1.3s ease,transform 1.3s cubic-bezier(.2,.7,.2,1),filter 1.3s ease}
 .h-place{font-size:clamp(11px,1.6vw,14px);letter-spacing:.42em;text-transform:uppercase;color:var(--gold-pale)}
 .h-rule{width:70px;height:1px;background:var(--gold-lt);margin:22px auto;transform:scaleX(0);transition:transform 1.4s ease}
-.h-tag{font-family:var(--serif);font-style:italic;font-size:clamp(20px,3.2vw,30px)}
+.h-tag{font-family:var(--serif);font-style:italic;font-size:clamp(15px,2.4vw,26px);line-height:1.8}
+.h-tag span{white-space:nowrap}
+.h-tag i{font-style:normal;color:var(--gold-lt);margin:0 .55em}
+@media(max-width:560px){.h-tag i{display:none}.h-tag span{display:block}}
 .hero .fade{opacity:0;transform:translateY(16px);transition:opacity 1.4s ease,transform 1.4s ease}
 .scroll-cue{position:absolute;bottom:28px;left:50%;translate:-50% 0;z-index:2;font-size:10px;letter-spacing:.4em;text-transform:uppercase;color:var(--gold-pale);display:flex;flex-direction:column;align-items:center;gap:10px;opacity:0;transition:opacity 1s ease 4.4s}
 .scroll-cue i{width:1px;height:42px;background:linear-gradient(var(--gold-pale),transparent);animation:cue 2s ease-in-out infinite;transform-origin:top}
@@ -367,7 +370,7 @@ body.opened .fab{transform:scale(1)}
     <h1 class="h-title" id="heroTitle">Dani Hill</h1>
     <div class="h-place fade" style="transition-delay:2s">Genting Highlands</div>
     <div class="h-rule"></div>
-    <div class="h-tag fade" style="transition-delay:3s">Your Private Wedding Estate</div>
+    <div class="h-tag fade" style="transition-delay:3s"><span>Luxury Weddings</span><i>|</i><span>Private Retreats</span><i>|</i><span>Exclusive Events</span></div>
   </div>
   <div class="scroll-cue">Scroll<i></i></div>
 </header>
